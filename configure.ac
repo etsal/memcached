@@ -105,7 +105,6 @@ AC_ARG_ENABLE(seccomp,
 AC_ARG_ENABLE(objsnap,
   [AS_HELP_STRING([--enable-objsnap],[Enable usage with objsnap EXPERIMENTAL])])
 
-
 AC_ARG_ENABLE(sasl,
   [AS_HELP_STRING([--enable-sasl],[Enable SASL authentication])])
 
@@ -253,10 +252,8 @@ fi
 
 if test "x$enable_objsnap" = "xyes"; then
   AC_MSG_WARN([Objsnap enabled!])
-  CPPFLAGS="-I/root/ryan/include $CPPFLAGS"
-  LIBS="$LIBS -L/root/ryan/libosnap/ -losnap"
+  LIBS="$LIBS -lmsnp"
 fi
-
 
 if test "x$enable_proxy_uring" = "xyes"; then
     AC_DEFINE([HAVE_LIBURING],1,[Set to nonzero if you want to enable proxy uring handling])
