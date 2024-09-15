@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <poll.h>
-#include <objsnap.h>
 
 /* Forward Declarations */
 static void item_link_q(item *it);

@@ -20,7 +20,6 @@
 #include <assert.h>
 #include <grp.h>
 #include <signal.h>
-#include <objsnap.h>
 /* need this to get IOV_MAX on some platforms. */
 #ifndef __need_IOV_MAX
 #define __need_IOV_MAX
@@ -694,7 +693,6 @@ typedef struct io_queue_cb_s {
 typedef struct _mc_resp_bundle mc_resp_bundle;
 typedef struct {
     pthread_t thread_id;        /* unique ID of this thread */
-    int objsnap_id;
     struct event_base *base;    /* libevent handle this thread uses */
     struct event notify_event;  /* listen event for notify pipe */
 #ifdef HAVE_EVENTFD
@@ -888,8 +886,6 @@ extern volatile bool is_paused;
 extern volatile int64_t delta;
 #endif
 
-extern index_t objsnap_object;
-
 /* TODO: Move to slabs.h? */
 extern volatile int slab_rebalance_signal;
 
@@ -934,7 +930,6 @@ conn *conn_new(const int sfd, const enum conn_states init_state, const int event
 
 void conn_worker_readd(conn *c);
 extern int daemonize(int nochdir, int noclose);
-
 
 #define mutex_lock(x) pthread_mutex_lock(x)
 #define mutex_unlock(x) pthread_mutex_unlock(x)

@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
-#include <objsnap.h>
+#include <memsnap.h>
 
 typedef struct _restart_data_cb restart_data_cb;
 
@@ -25,7 +25,6 @@ struct _restart_data_cb {
 static int mmap_fd = 0;
 static void *mmap_base = NULL;
 static size_t slabmem_limit = 0;
-index_t objsnap_object;
 char *memory_file = NULL;
 
 static restart_data_cb *cb_stack = NULL;
@@ -299,11 +298,18 @@ static long _find_pagesize(void) {
 
 bool restart_mmap_open(const size_t limit, const char *file, void **mem_base) {
     bool reuse_mmap = true;
+    int error;
 
     long pagesize = _find_pagesize();
     memory_file = strdup(file);
-    mmap_fd = open(file, O_RDWR|O_CREAT, S_IRWXU);
-    fprintf(stderr, "Limit on file is %lu\n", limit);
+
+    error = slsfs_sas_create((char *)file, limit);
+    if (error != 0) {
+	    fprintf(stderr, "slsfs_sas_create failed (error %d)\n", error);
+	    abort();
+    }
+
+    mmap_fd = open(file, O_RDWR, S_IRWXU);
     if (mmap_fd == -1) {
         perror("failed to open file for mmap");
         abort();
@@ -313,18 +319,6 @@ bool restart_mmap_open(const size_t limit, const char *file, void **mem_base) {
         abort();
     }
 
-    if (objsnap_newfs("/dev/nvd0")) {
-	perror("newfs error");
-	abort();
-    }
-
-    if (objsnap_init("/dev/nvd0")) {
-        perror("ftruncate failed");
-        abort();
-    }
-
-    objsnap_object = objsnap_create();
-
     /* Allocate everything in a big chunk with malloc */
     if (limit % pagesize) {
         // This is a sanity check; shouldn't ever be possible since we
@@ -332,10 +326,9 @@ bool restart_mmap_open(const size_t limit, const char *file, void **mem_base) {
         fprintf(stderr, "[restart] memory limit not divisible evenly by pagesize (please report bug)\n");
         abort();
     }
-    size_t align = (sizeof(size_t) * 8 - (__builtin_clzl(4095)));
-    mmap_base = mmap(NULL, limit, PROT_READ|PROT_WRITE, MAP_SHARED | MAP_ANON | MAP_ALIGNED(align), -1, 0);
-    if (mmap_base == MAP_FAILED) {
-        perror("failed to mmap, aborting");
+    error = slsfs_sas_map(mmap_fd, &mmap_base);
+    if (error != 0) {
+        fprintf(stderr, "slsfs_sas_map failed (error %d)\n", error);
         abort();
     }
     // Set the limit before calling check_mmap, so we can find the meta page..

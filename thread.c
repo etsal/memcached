@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <memsnap.h>
 
 #include "queue.h"
 
@@ -376,7 +377,7 @@ static void notify_worker_fd(LIBEVENT_THREAD *t, int sfd, enum conn_queue_item_m
 /*
  * Creates a worker thread.
  */
-static void create_worker(void *(*func)(void *), void *arg, int i) {
+static void create_worker(void *(*func)(void *), void *arg) {
     pthread_attr_t  attr;
     int             ret;
 
@@ -387,7 +388,6 @@ static void create_worker(void *(*func)(void *), void *arg, int i) {
                 strerror(ret));
         exit(1);
     }
-    ((LIBEVENT_THREAD *)arg)->objsnap_id = i;
 
     thread_setname(((LIBEVENT_THREAD*)arg)->thread_id, "mc-worker");
 }
@@ -519,6 +519,10 @@ static void *worker_libevent(void *arg) {
 
     register_thread_initialized();
 
+    /*
+     * The "descriptors" passed to sas_trace_* are not actually
+     * used, see libmsnp/msnp.c for more details.
+     */
     event_base_loop(me->base, 0);
 
     // same mechanism used to watch for all threads exiting.
@@ -1098,9 +1102,11 @@ void memcached_thread_init(int nthreads, void *arg) {
         stats_state.reserved_fds += 5;
     }
 
+    sas_trace_start(-1);
+
     /* Create threads after we've done all the libevent setup. */
     for (i = 0; i < nthreads; i++) {
-        create_worker(worker_libevent, &threads[i], i);
+        create_worker(worker_libevent, &threads[i]);
     }
 
     /* Wait for all the threads to set themselves up before returning. */

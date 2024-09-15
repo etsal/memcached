@@ -45,7 +45,7 @@
 #include <assert.h>
 #include <sysexits.h>
 #include <stddef.h>
-#include <objsnap.h>
+#include <memsnap.h>
 
 #ifdef HAVE_GETOPT_LONG
 #include <getopt.h>
@@ -1570,7 +1570,6 @@ enum store_item_type do_store_item(item *it, int comm, LIBEVENT_THREAD *t, const
     enum store_item_type stored = NOT_STORED;
 
     enum cas_result { CAS_NONE, CAS_MATCH, CAS_BADVAL, CAS_STALE, CAS_MISS };
-    int thread_id  = t->objsnap_id;
 
     item *new_it = NULL;
     uint32_t flags;
@@ -1678,17 +1677,12 @@ enum store_item_type do_store_item(item *it, int comm, LIBEVENT_THREAD *t, const
                 do_store = true;
                 break;
         }
+
         if (do_store) {
             STORAGE_delete(t->storage, old_it);
-#ifdef OBJSNAP
-	    int error = objsnap_dirty(objsnap_object, thread_id, it);
             item_replace(old_it, it, hv);
             stored = STORED;
-	    objsnap_checkpoint(thread_id);
-#else
-     	    item_replace(old_it, it, hv);
-            stored = STORED;
-#endif
+            sas_trace_commit(-1);
         }
 
         do_item_remove(old_it);         /* release our reference */
@@ -1725,15 +1719,9 @@ enum store_item_type do_store_item(item *it, int comm, LIBEVENT_THREAD *t, const
         }
 
         if (do_store) {
-#ifdef OBJSNAP
-	    int error = objsnap_dirty(objsnap_object, thread_id, it);
             do_item_link(it, hv);
             stored = STORED;
-	    objsnap_checkpoint(thread_id);
-#else
-            do_item_link(it, hv);
-            stored = STORED;
-#endif
+            sas_trace_commit(-1);
         }
     }
 

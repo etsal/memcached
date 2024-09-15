@@ -22,6 +22,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <pthread.h>
+#include <memsnap.h>
 
 //#define DEBUG_SLAB_MOVER
 /* powers-of-N allocation structures */
@@ -151,12 +152,16 @@ static void * alloc_large_chunk(const size_t limit)
         ptr = NULL;
     }
 #elif defined(__FreeBSD__)
-    size_t align = (sizeof(size_t) * 8 - (__builtin_clzl(4095)));
-    ptr = mmap(NULL, limit, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON | MAP_ALIGNED(align),  -1, 0);
-    if (ptr == MAP_FAILED) {
-        fprintf(stderr, "Failed to set super pages\n");
+    printf("Slab creation triggered\n");
+    abort();
+#if 0
+    int error;
+    error = slsfs_sas_map(file, limit, &ptr);
+    if (error != 0)
+        fprintf(stderr, "slsfs_sas_map failed (error %d)\n", error);
         ptr = NULL;
     }
+#endif
 #else
     ptr = malloc(limit);
 #endif
