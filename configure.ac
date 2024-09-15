@@ -253,8 +253,8 @@ fi
 
 if test "x$enable_objsnap" = "xyes"; then
   AC_MSG_WARN([Objsnap enabled!])
-  CPPFLAGS="-I/root/ryan/include $CPPFLAGS"
-  LIBS="$LIBS -L/root/ryan/libosnap/ -losnap"
+  CPPFLAGS="-I/usr/include $CPPFLAGS"
+  LIBS="$LIBS -L/usr/lib/ -losnap"
 fi
 
 
