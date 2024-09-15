@@ -152,7 +152,7 @@ static void * alloc_large_chunk(const size_t limit)
     }
 #elif defined(__FreeBSD__)
     size_t align = (sizeof(size_t) * 8 - (__builtin_clzl(4095)));
-    ptr = mmap(NULL, limit, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON | MAP_ALIGNED(align) | MAP_ALIGNED_SUPER, -1, 0);
+    ptr = mmap(NULL, limit, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON | MAP_ALIGNED(align),  -1, 0);
     if (ptr == MAP_FAILED) {
         fprintf(stderr, "Failed to set super pages\n");
         ptr = NULL;

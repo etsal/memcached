@@ -376,7 +376,7 @@ static void notify_worker_fd(LIBEVENT_THREAD *t, int sfd, enum conn_queue_item_m
 /*
  * Creates a worker thread.
  */
-static void create_worker(void *(*func)(void *), void *arg) {
+static void create_worker(void *(*func)(void *), void *arg, int i) {
     pthread_attr_t  attr;
     int             ret;
 
@@ -387,6 +387,7 @@ static void create_worker(void *(*func)(void *), void *arg) {
                 strerror(ret));
         exit(1);
     }
+    ((LIBEVENT_THREAD *)arg)->objsnap_id = i;
 
     thread_setname(((LIBEVENT_THREAD*)arg)->thread_id, "mc-worker");
 }
@@ -1099,7 +1100,7 @@ void memcached_thread_init(int nthreads, void *arg) {
 
     /* Create threads after we've done all the libevent setup. */
     for (i = 0; i < nthreads; i++) {
-        create_worker(worker_libevent, &threads[i]);
+        create_worker(worker_libevent, &threads[i], i);
     }
 
     /* Wait for all the threads to set themselves up before returning. */
